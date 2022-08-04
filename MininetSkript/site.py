@@ -8,6 +8,8 @@ from mininet.cli import CLI
 from mininet.node import Node, Switch
 import time, re, os
 
+# Eine Node mit ipv4 forwarding aktiviert
+# Dient zur Erstellung eines Hosts der als Router fungiert
 class Router(Node):
     def config(self, **params):
         super(Router, self).config(**params)
@@ -29,13 +31,17 @@ def checkIntf(intf):
               'and is probably in use!\n')
         exit(1)
 
+# Hier implementieren wir unser Netzwerk (Topologie)
+
 class Netzwerk(Topo):
     def build(self, **_opts):
-
+        # IP Adresse für die Router r1-r4
         defaultIP = '192.168.%s.1/24'
 
+        # Leere Liste. Notwendig für später
         routers = []
 
+        # Erstellen der 4 Router, welches jeweils eine Site darstellen
         for r in range(4):
             router = self.addNode('r%s' % (r+1),
                                   cls=Router, ip=defaultIP % (r+1),
@@ -44,10 +50,13 @@ class Netzwerk(Topo):
 
             routers.append(router)
 
+            # Erstellen der 4 Switches für die vier Sites
             switch = self.addSwitch('s%s' % (r+1))
 
+            # Erstellender Verlinkung zwischen dem Router und der Switch pro Site
             self.addLink(switch, router)
 
+            # Erstellen der 40 Hosts (10 pro Site) mit anschließender Verlinkung
             for h in range(10):
                 name = ((r)*10)+(h+1)
                 host = self.addHost(name='h%s' % (name),
@@ -57,6 +66,8 @@ class Netzwerk(Topo):
                                     )
                 self.addLink(host, switch)
 
+        # Hinzufügen von Interfaces für die Router und Verlinkung der Router untereinander
+        # Stellt das Internet dar
         self.addLink(routers[0],
                      routers[1],
                      intfName1='r1-eth2',
@@ -106,7 +117,9 @@ class Netzwerk(Topo):
                      bw=20
                      )
 
+# Main-Funktion
 def Main():
+    # Erstellt ein topo Objekt mit einer Funktion
     topo = Netzwerk()
     
     os.system("sudo ovs-vsctl add-br s1")
@@ -124,12 +137,15 @@ def Main():
 
     os.system("sudo ip route add default via 192.168.1.1")
 
+    # Erstellung eines Controllers und die notwendigen Eigenschaften
     c0 = RemoteController('c0', controller=RemoteController,
                           ip="192.168.1.20", port=6653)
-
+    # Initialisierung von Mininet mit einem topo Objekt, einem controller, ein Link, und eine switch
     net = Mininet(topo=topo, controller=c0,
                   link=TCLink, switch=OVSSwitch, waitConnected=True)
 
+    # Hinzufügen von Routing, um Netzwerke zu erreichen, die nicht direkt über GRE-Tunnel verbunden sind
+    # Route von jedem Router zum anderen
     info(net['r1'].cmd(
         "ip tunnel add gre12 mode gre local 10.100.12.1 remote 10.100.12.2 ttl 255"))
     info(net['r1'].cmd("ip link set gre12 up"))
@@ -370,6 +386,7 @@ def Main():
     info(net['r4'].cmd(
         "ip xfrm policy add dir in src 10.100.34.3 dst 10.100.34.4 tmpl proto esp mode transport"))
 
+    # Output von Routing information
     info('*** Routing Table on Router:\n')
     info(net['r1'].cmd('route'))
     info(net['r2'].cmd('route'))
@@ -384,6 +401,7 @@ def Main():
     s2 = net.getNodeByName('s2')
     _intf = Intf('enp0s10', node=s2)
 
+    #Start von Mininet
     net.start()
 
     print("Dumping host connections")
@@ -437,7 +455,7 @@ def Main():
     os.system("sudo ip addr del 192.168.2.20/24 dev s2")
     os.system("sudo ip addr del 192.168.3.20/24 dev s3")
     os.system("sudo ip addr del 192.168.4.20/24 dev s4")
-
+    # Mininet Simulation wird gestoppt
     net.stop()
 
     os.system("sudo mn -c")
