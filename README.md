@@ -1,0 +1,3 @@
+# SoftwareDefinedNetworking
+Gegenwärtig gibt es im Bereich der Verwaltung von Computernetzwerken viele neue komplexe Anforderungen und notwendige Konfigurationen, die berücksichtigt werden müssen. 
+Der Datenaustausch innerhalb eines Netzwerkes ist um ein Vielfaches gestiegen, somit steigt die Auslastung, welches ein Netzwerksystem aushalten muss. Bei einem traditionellen Netzwerk würde das heißen, dass ein Netzwerkadministrator alle Netzwerkkomponenten wie Router, Switches und Firewalls etc. manuell konfigurieren müsste, um allen entsprechenden Anforderungen zu verwirklichen. Ferner müssen Netzwerkadministratoren viel Zeit in die Konfiguration legen, um alles korrekt zu implementieren.
